@@ -17,7 +17,7 @@ pub mod domain {
 	pub struct Book {
 	    id : i32,
 	    title : Option<String>,
-	    date : Option<naive::NaiveDateTime>, 
+	    save_date : Option<naive::NaiveDateTime>, 
 	}
 }
 
