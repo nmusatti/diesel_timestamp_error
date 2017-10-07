@@ -7,7 +7,7 @@ extern crate dotenv;
 
 use std::env;
 
-use diesel::{ Connection, LoadDsl, result, sqlite };
+use diesel::{ Connection, LoadDsl, sqlite };
 use dotenv::dotenv;
 
 pub mod domain {
@@ -15,9 +15,9 @@ pub mod domain {
 
 	#[derive(Queryable)]
 	pub struct Book {
-	    id : i32,
-	    title : Option<String>,
-	    save_date : Option<naive::NaiveDateTime>, 
+	    pub id : i32,
+	    pub title : Option<String>,
+	    pub save_date : Option<naive::NaiveDateTime>, 
 	}
 }
 
@@ -26,8 +26,18 @@ pub mod schema {
 }
 
 fn main() {
+	dotenv().ok();
     use self::schema::books::dsl::*;
 	let database_url = env::var("DATABASE_URL").unwrap();
 	let conn = sqlite::SqliteConnection::establish(&database_url).unwrap();
-    let res = books.load::<domain::Book>(&conn);
+    match books.load::<domain::Book>(&conn) {
+    	Ok(vb) => {
+    		for b in vb {
+    			if let Some(t) = b.title {
+		    		println!("{}", t);
+    			}			
+    		}
+    	},
+    	Err(e) => println!("{}", e)
+    }
 }
