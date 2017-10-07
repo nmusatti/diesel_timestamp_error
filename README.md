@@ -11,48 +11,45 @@ The ``books`` table is defined as follows:
     )
 ```
 
-I'm trying to query it with the following struct:
+I'm trying to insert records into it with the following struct:
 
 ```rust
     pub mod domain {
-        use chrono::naive;
+        use chrono;
     
-        #[derive(Queryable)]
-        pub struct Book {
-            id : i32,
-            title : Option<String>,
-            save_date : Option<naive::NaiveDateTime>, 
+        use super::schema::books;
+        
+        #[derive(Insertable)]
+        #[table_name="books"]
+        pub struct NewBook<'a> {
+            pub title : Option<&'a str>,
+            pub save_date : Option<&'a chrono::NaiveDateTime>, 
         }
+    
     }
 ```
 
-However when I try to actually perform the query, as in:
+However when I try to compile it I get several error messages complaining about unsatisfied trait
+bounds such as the following:
 
-```rust
-    fn main() {
-        use self::schema::books::dsl::*;
-        let database_url = env::var("DATABASE_URL").unwrap();
-        let conn = sqlite::SqliteConnection::establish(&database_url).unwrap();
-        let res = books.load::<domain::Book>(&conn);
-    }
-```
-
-I get the following error message:
-
-    error[E0277]: the trait bound `std::option::Option<chrono::NaiveDateTime>: diesel::types::FromSqlRow<diesel::types::Nullable<diesel::types::Timestamp>, _>` is not satisfied
-      --> src/main.rs:32:21
+    error[E0277]: the trait bound `chrono::NaiveDateTime: diesel::Expression` is not satisfied
+      --> src/main.rs:30:11
        |
-    32 |     let res = books.load::<domain::Book>(&conn);
-       |                     ^^^^ the trait `diesel::types::FromSqlRow<diesel::types::Nullable<diesel::types::Timestamp>, _>` is not implemented for `std::option::Option<chrono::NaiveDateTime>`
+    30 |    #[derive(Insertable)]
+       |             ^^^^^^^^^^ the trait `diesel::Expression` is not implemented for `chrono::NaiveDateTime`
+       |
+       = note: required because of the requirements on the impl of `diesel::Expression` for `&'a chrono::NaiveDateTime`
+       = note: this error originates in a macro outside of the current crate
+    
+    error[E0277]: the trait bound `&'insert domain::NewBook<'a>: diesel::Insertable<schema::__diesel_infer_schema::infer_books::books::table, DB>` is not satisfied
+      --> src/main.rs:30:11
+       |
+    30 |    #[derive(Insertable)]
+       |             ^^^^^^^^^^ the trait `diesel::Insertable<schema::__diesel_infer_schema::infer_books::books::table, DB>` is not implemented for `&'insert domain::NewBook<'a>`
        |
        = help: the following implementations were found:
-                 <std::option::Option<chrono::naive::date::NaiveDate> as diesel::types::FromSqlRow<diesel::types::Nullable<diesel::types::Date>, DB>>
-                 <std::option::Option<chrono::naive::time::NaiveTime> as diesel::types::FromSqlRow<diesel::types::Nullable<diesel::types::Time>, DB>>
-                 <std::option::Option<chrono::naive::datetime::NaiveDateTime> as diesel::types::FromSqlRow<diesel::types::Nullable<diesel::types::Timestamp>, DB>>
-                 <std::option::Option<bool> as diesel::types::FromSqlRow<diesel::types::Nullable<diesel::types::Bool>, DB>>
-               and 26 others
-       = note: required because of the requirements on the impl of `diesel::types::FromSqlRow<(diesel::types::Integer, diesel::types::Nullable<diesel::types::Text>, diesel::types::Nullable<diesel::types::Timestamp>), _>` for `(i32, std::option::Option<std::string::String>, std::option::Option<chrono::NaiveDateTime>)`
-       = note: required because of the requirements on the impl of `diesel::Queryable<(diesel::types::Integer, diesel::types::Nullable<diesel::types::Text>, diesel::types::Nullable<diesel::types::Timestamp>), _>` for `domain::Book`
+                 <&'insert domain::NewBook<'a> as diesel::Insertable<schema::__diesel_infer_schema::infer_books::books::table, DB>>
+       = note: required by `diesel::Insertable`
+       = note: this error originates in a macro outside of the current crate
 
-What I don't understand is why the implementation for ``chrono::naive::datetime::NaiveDateTime``
-isn't picked up and what I should do to make it happen.
+Note that this works with diesel 0.14, but breaks with 0.15 and 0.16.
