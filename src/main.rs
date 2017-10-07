@@ -52,7 +52,10 @@ fn main() {
     		for b in vb {
     			if let Some(t) = b.title {
 		    		println!("{}", t);
-    			}			
+    			}
+    			if let Some(sd) = b.save_date {
+		    		println!("{}", sd);
+    			}
     		}
     	},
     	Err(e) => println!("{}", e)
