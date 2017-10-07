@@ -5,6 +5,6 @@ authors = ["Nicola Musatti <nicola.musatti@gmail.com>"]
 
 [dependencies]
 chrono = "0.4"
-diesel = { version = "0.14", features = [ "chrono", "sqlite" ] }
-diesel_codegen = { version = "0.14", features = [ "sqlite" ] }
-dotenv = "0.9"
+diesel = { version = "0.16", features = [ "chrono", "sqlite" ] }
+diesel_codegen = { version = "0.16", features = [ "sqlite" ] }
+dotenv = "0.10"
